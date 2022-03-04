@@ -13,6 +13,7 @@ const i18n = {
   },
   defaultLang: "de",
   useBrowserDefault: true,
+  nestKeysWithDot: true,
 } as I18N;
 
 export { i18n };

@@ -5,26 +5,27 @@
 import { cleanup } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks/dom'; // will use react-dom
 import { useTranslation } from './use-translation';
+import {I18N} from "../types";
 
 // import useSelectedLanguage from './use-selected-language';
 
-jest.mock('./../../../i18n/index', () => {
-	return {
-		__esModule: true,
-		i18n: {
-			translations: {
-				mock: {
-					template: '{{count}} times',
-					string: 'mock',
-					arr: [1, 2, 3],
-					obj: { key: 'valueMock' },
-					levelOne: { levelOneString: 'levelOneMock' },
-				},
+const defaultConfig: { __esModule: boolean; i18n: I18N } =  {
+	__esModule: true,
+	i18n: {
+		translations: {
+			mock: {
+				template: '{{count}} times',
+				string: 'mock',
+				// @ts-expect-error We're testing for invalid value specifically
+				arr: [1, 2, 3],
+				obj: { key: 'valueMock' },
+				levelOne: { levelOneString: 'levelOneMock' },
+				"example.com": "example.mock",
 			},
-			defaultLang: 'mock',
 		},
-	};
-});
+		defaultLang: 'mock',
+	},
+};
 
 jest.mock('next/router', () => ({
 	useRouter() {
@@ -36,6 +37,7 @@ jest.mock('next/router', () => ({
 		};
 	},
 }));
+const i18nObj = jest.spyOn(require('./../../../i18n/index'), 'default');
 const useRouter = jest.spyOn(require('next/router'), 'useRouter');
 
 jest.mock('./use-selected-language', () => {
@@ -49,6 +51,10 @@ const useSelectedLanguage = jest.spyOn(
 	require('./use-selected-language'),
 	'default'
 );
+
+beforeAll(() => {
+	i18nObj.mockImplementation(() => defaultConfig)
+});
 
 beforeEach(() => {
 	useSelectedLanguage.mockImplementation(() => ({
@@ -84,6 +90,16 @@ describe('The hook exports a function ', () => {
 	it(`t() which returns the value for a multilevel key based on the langage`, async () => {
 		const key = 'levelOne.levelOneString';
 		const expectation = 'levelOneMock';
+		const { result } = renderHook(() => useTranslation());
+		expect(result.current.t(key)).toEqual(expectation);
+	});
+
+	it(`t() which returns the value for a multilevel key based on the langage`, async () => {
+		const newConfig = { ...defaultConfig };
+		newConfig.i18n.nestKeysWithDot = false;
+		i18nObj.mockImplementation(() => newConfig);
+		const key = 'example.com';
+		const expectation = 'example.mock';
 		const { result } = renderHook(() => useTranslation());
 		expect(result.current.t(key)).toEqual(expectation);
 	});

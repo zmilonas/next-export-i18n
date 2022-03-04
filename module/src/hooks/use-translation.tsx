@@ -20,6 +20,7 @@ const useTranslation = ( ) => {
 
 	const translations: Dictionary = i18nObj.translations;
 	const defaultLang: string = i18nObj.defaultLang;  ;
+	const nestKeysWithDot: boolean = i18nObj.nestKeyWithDot;
 	const { lang } = useSelectedLanguage();
 	// const [lang] = useSelectedLanguage();
 
@@ -33,11 +34,11 @@ const useTranslation = ( ) => {
 		 * @returns the value stored for this key, could be a string, a number, an array or an object
 		 */
 		t: (key: string, view?: object): any => {
-			let value: any = key.split('.').reduce(
+			let value: any = nestKeysWithDot ? key.split('.').reduce(
 					(previous: any, current: string) =>
 						(previous && previous[current]) || null,
 					translations[lang]
-				);
+				) : translations[lang][key];
 			let translation: any = value || key;
 			try {
 				return Mustache.render(translation, view);
